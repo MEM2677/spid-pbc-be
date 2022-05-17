@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: entando-operator-config
+data:
+  entando.pod.completion.timeout.seconds: "8000"
+  entando.pod.readiness.timeout.seconds: "8000"
+  entando.tls.secret.name: entando-empty-tls-secret 

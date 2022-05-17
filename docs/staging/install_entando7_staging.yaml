@@ -1,0 +1,12 @@
+apiVersion: entando.org/v1
+kind: EntandoApp
+metadata:
+  namespace: demo-forum-pa
+  name: forumpa
+spec:
+  environmentVariables: []
+  entandoAppVersion: '6.4'
+  dbms: postgresql
+  ingressHostName: forumpa.apps.psdemo.eng-entando.com 
+  standardServerImage: wildfly
+  replicas: 1
