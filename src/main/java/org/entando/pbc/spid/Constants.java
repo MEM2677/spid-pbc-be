@@ -1,11 +1,13 @@
 package org.entando.pbc.spid;
 
+import org.entando.pbc.spid.dto.MapperAttribute;
+
 public interface Constants {
 
   boolean REST_API_DEBUG_ENABLED = true;
 
 
-  String PROTO = "https://";
+  String PROTO = "https";
 
   // constant paths within a POD
 //  String CERT_FILE = "/var/run/secrets/kubernetes.io/serviceaccount/ca.crt";
@@ -29,13 +31,32 @@ public interface Constants {
   String KEYCLOAK_CLIENT_SECRET = "admin-cli";
   String KEYCLOAK_DEFAULT_REALM = "entando";
   String KEYCLOAK_DEFAULT_AUTH_FLOW = "first broker login";
-  String KEYCLOAK_NEW_AUTH_FLOW_NAME = "SPID first broker login";
+  String KEYCLOAK_NEW_AUTH_FLOW_NAME = "SPID first broker login"; // EDITABLE
   String KEYCLOAK_EXECUTION_HANDLE_EXISTING_ACCOUNT_NAME = KEYCLOAK_NEW_AUTH_FLOW_NAME + " Handle Existing Account";
   String KEYCLOAK_EXECUTION_EXPECTED_DISPLAY_NAME = "Automatically set existing user";
   String KEYCLOAK_EXECUTION_CONFIRM_LINK_DISPLAY_NAME = "Confirm link existing account";
   String KEYCLOAK_EXECUTION_VERIFICATION_OPTIONS_DISPLAY_NAME = KEYCLOAK_NEW_AUTH_FLOW_NAME + " Account verification options";
-  String KEYCLOAK_IDP_DISPLAY_NAME = "SPID TEST LOCAL";
-  String KEYCLOAK_IDP_ALIAS = "spid-test-local";
+  String KEYCLOAK_IDP_DISPLAY_NAME = "SPID Login (test)"; // // EDITABLE, login button text!
+  String KEYCLOAK_IDP_ALIAS = "spid-test-pubblico"; // EDITABLE
+
+  // mapper setup
+  MapperAttribute KEYCLOAK_IDP_MAPPING[] = {
+    new MapperAttribute("First Name", "name", "firstName"),
+    new MapperAttribute("Last Name", "familyName", "lastName"),
+    new MapperAttribute("SPID Code", "spidCode", "spid-spidCode"),
+    new MapperAttribute("Email", "email", "spid-email"),
+    new MapperAttribute("Tax Id", "fiscalNumber", "spid-fiscalNumber"),
+    new MapperAttribute("Gender", "gender", "spid-gender"),
+    new MapperAttribute("Date of Birth", "dateOfBirth", "spid-dateOfBirth"),
+    new MapperAttribute("Place of Birth", "placeOfBirth", "spid-placeOfBirth"),
+    new MapperAttribute("County of Birth", "countyOfBirth", "spid-countyOfBirth"),
+    new MapperAttribute("Mobile Phone", "mobilePhone", "spid-mobilePhone"),
+    new MapperAttribute("Address", "address", "spid-address"),
+    new MapperAttribute("Digital Address", "digitalAddress", "spid-digitalAddress"),
+    new MapperAttribute("Company Name", "companyName", "spid-companyName"),
+    new MapperAttribute("Company Address", "registeredOffice", "spid-registeredOffice"),
+    new MapperAttribute("VAT Number", "ivaCode", "spid-ivaCode"),
+  };
 
   // Identity provider settings for local environment
   String TEST_LOCAL_IdP= "{\n" +
@@ -86,11 +107,10 @@ public interface Constants {
     "    \"principalType\": \"ATTRIBUTE\"}\n" +
     "  }";
 
-
+  // SETTAGGI PER L'AMBIENTE PUBBLICO DI TEST https://demo.spid.gov.it/
   String PUBLIC_TEST_IdP = " {\n" +
-    "        \"alias\": \"spid-pubblico\",\n" +
-    "        \"displayName\": \"SPID (test)\",\n" +
-    "        \"internalId\": \"5a83c1f9-06e6-4341-8fd9-fe6a72470a13\",\n" +
+    "        \"alias\": \"" + KEYCLOAK_IDP_ALIAS + "\",\n" +
+    "        \"displayName\": \"" + KEYCLOAK_IDP_DISPLAY_NAME + "\",\n" +
     "        \"providerId\": \"spid\",\n" +
     "        \"enabled\": true,\n" +
     "        \"updateProfileFirstLoginMode\": \"on\",\n" +
@@ -99,7 +119,7 @@ public interface Constants {
     "        \"addReadTokenRoleOnCreate\": false,\n" +
     "        \"authenticateByDefault\": false,\n" +
     "        \"linkOnly\": false,\n" +
-    "        \"firstBrokerLoginFlowAlias\": \"SPID first broker login\",\n" +
+    "        \"firstBrokerLoginFlowAlias\": \"" + KEYCLOAK_NEW_AUTH_FLOW_NAME + "\",\n" +
     "        \"config\": {\n" +
     "            \"postBindingLogout\": \"true\",\n" +
     "            \"otherContactPhone\": \"+395556935632\",\n" +
@@ -135,5 +155,6 @@ public interface Constants {
     "            \"principalType\": \"ATTRIBUTE\"\n" +
     "        }\n" +
     "    }";
+
 
 }

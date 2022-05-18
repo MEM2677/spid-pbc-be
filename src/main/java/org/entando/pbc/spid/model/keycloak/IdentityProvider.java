@@ -132,4 +132,5 @@ public class IdentityProvider {
   public void setConfig(IdentityProviderConfig config) {
     this.config = config;
   }
+
 }

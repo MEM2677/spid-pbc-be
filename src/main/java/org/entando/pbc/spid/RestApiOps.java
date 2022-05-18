@@ -36,7 +36,7 @@ public class RestApiOps {
 
   public static Token getAdminAccessToken(String host, String username, String password, String clientId, String clientSecret) {
     final String REST_URI
-      = PROTO + host + "/auth/realms/master/protocol/openid-connect/token";
+      = PROTO + "://" + host + "/auth/realms/master/protocol/openid-connect/token";
     Token token = null;
     Client client = null;
 
@@ -78,7 +78,7 @@ public class RestApiOps {
 
   public static boolean duplicateAuthFlow(String host, Token token) {
     final String REST_URI
-      = PROTO + host + "/auth/admin/realms/"+ KEYCLOAK_DEFAULT_REALM + "/authentication/flows/" + KEYCLOAK_DEFAULT_AUTH_FLOW+ "/copy";
+      = PROTO + "://" + host + "/auth/admin/realms/"+ KEYCLOAK_DEFAULT_REALM + "/authentication/flows/" + KEYCLOAK_DEFAULT_AUTH_FLOW+ "/copy";
     Client client = null;
     // for a simple payload there's no need to disturb Jackson
     String payload = "{\"newName\":\""+ KEYCLOAK_NEW_AUTH_FLOW_NAME+ "\"}";
@@ -112,7 +112,7 @@ public class RestApiOps {
 
   public static boolean addExecutable(String host, Token token) {
     final String REST_URI
-      = PROTO + host + "/auth/admin/realms/"+ KEYCLOAK_DEFAULT_REALM + "/authentication/flows/" + KEYCLOAK_EXECUTION_HANDLE_EXISTING_ACCOUNT_NAME + "/executions/execution";
+      = PROTO + "://" + host + "/auth/admin/realms/"+ KEYCLOAK_DEFAULT_REALM + "/authentication/flows/" + KEYCLOAK_EXECUTION_HANDLE_EXISTING_ACCOUNT_NAME + "/executions/execution";
     Client client = null;
     // for a simple payload there's no need to disturb Jackson
     String payload = "{\"provider\":\"idp-auto-link\"}";
@@ -147,7 +147,7 @@ public class RestApiOps {
   public static Execution[] getExecutions(String host, Token token) {
     Execution[] result = null;
     final String REST_URI
-      = PROTO + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/authentication/flows/" + KEYCLOAK_NEW_AUTH_FLOW_NAME + "/executions";
+      = PROTO + "://" + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/authentication/flows/" + KEYCLOAK_NEW_AUTH_FLOW_NAME + "/executions";
     Client client = null;
 
     try {
@@ -176,7 +176,7 @@ public class RestApiOps {
 
   public static boolean raiseExecutionPriority(String host, Token token, String id) {
     final String REST_URI
-      = PROTO + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/authentication/executions/" + id + "/raise-priority";
+      = PROTO + "://" + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/authentication/executions/" + id + "/raise-priority";
     Client client = null;
     boolean isOk = true;
 
@@ -206,7 +206,7 @@ public class RestApiOps {
 
   public static AuthenticationFlow updateExecution(String host, Token token, Execution execution) {
     final String REST_URI
-      = PROTO + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/authentication/flows/"+ KEYCLOAK_NEW_AUTH_FLOW_NAME+ "/executions";
+      = PROTO + "://" + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/authentication/flows/"+ KEYCLOAK_NEW_AUTH_FLOW_NAME+ "/executions";
     AuthenticationFlow result = null;
     Client client = null;
 
@@ -237,7 +237,7 @@ public class RestApiOps {
 
   public static boolean createIdentityProvider(String host, Token token, IdentityProvider idp) {
     final String REST_URI
-      = PROTO + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/identity-provider/instances";
+      = PROTO + "://" + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/identity-provider/instances";
     Client client = null;
     boolean isOk = false;
     try {
@@ -265,9 +265,53 @@ public class RestApiOps {
     return isOk;
   }
 
+  public static boolean addMapperUsername(String host, Token token) {
+    return addMapperElement(host, token, USERNAME_MAPPER_CFG);
+  }
+
+  public static boolean addMapperGeneric(String host, Token token,
+                                  String name, String attributeName, String userAttributeName) {
+    String payload = ATTRIBUTE_MAPPER_CFG
+      .replace("_ATTRIBUTE_NAME_", attributeName)
+      .replace("_USER_ATTRIBUTE_",userAttributeName)
+      .replace("_NAME_", name);
+    return addMapperElement(host, token, payload);
+  }
+
+  private static boolean addMapperElement(String host, Token token, String payload) {
+    final String REST_URI
+      = PROTO + "://" + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/identity-provider/instances/" + KEYCLOAK_IDP_ALIAS + "/mappers";
+    Client client = null;
+    boolean isOk = false;
+
+    try {
+      client = ClientBuilder.newClient(REST_API_DEBUG_ENABLED ? createClientConfig(): new ClientConfig())
+        .register(JacksonFeature.class);
+      try (Response response = client
+        .target(REST_URI)
+        .request(MediaType.APPLICATION_JSON)
+        .header("Authorization", "Bearer " + token.getAccessToken())
+        .post(Entity.entity(payload, MediaType.APPLICATION_JSON))) {
+
+        if (response.getStatus() == HttpStatus.SC_CREATED) {
+          isOk = true;
+        } else {
+          logger.debug("Unexpected status: " + response.getStatus());
+        }
+      }
+    } catch (Throwable t) {
+      logger.error("error in ", t);
+    } finally {
+      if (client != null) {
+        client.close();
+      }
+    }
+    return isOk;
+  }
+
   public static void another(String host, Token token) {
     final String REST_URI
-      = PROTO + host + "/auth/realms/master/protocol/openid-connect/token";
+      = PROTO + "://" + host + "/auth/realms/master/protocol/openid-connect/token";
     Client client = null;
     try {
 
@@ -279,4 +323,27 @@ public class RestApiOps {
       }
     }
   }
+
+  // templates for mappers
+  public static String USERNAME_MAPPER_CFG= "{\n" +
+    "   \"identityProviderAlias\":\"" + KEYCLOAK_IDP_ALIAS + "\",\n" +
+    "   \"config\":{\n" +
+    "      \"syncMode\":\"INHERIT\",\n" +
+    "      \"template\":\"${ATTRIBUTE.fiscalNumber}\"\n" +
+    "   },\n" +
+    "   \"name\":\"User Name\",\n" +
+    "   \"identityProviderMapper\":\"spid-saml-username-idp-mapper\"\n" +
+    "}";
+
+  public static String ATTRIBUTE_MAPPER_CFG= "{\n" +
+    "   \"identityProviderAlias\":\""+ KEYCLOAK_IDP_ALIAS + "\",\n" +
+    "   \"config\":{\n" +
+    "      \"syncMode\":\"INHERIT\",\n" +
+    "      \"attribute.name\":\"_ATTRIBUTE_NAME_\",\n" +
+    "      \"user.attribute\":\"_USER_ATTRIBUTE_\"\n" +
+    "   },\n" +
+    "   \"name\":\"_NAME_\",\n" +
+    "   \"identityProviderMapper\":\"spid-user-attribute-idp-mapper\"\n" +
+    "}";
+
 }

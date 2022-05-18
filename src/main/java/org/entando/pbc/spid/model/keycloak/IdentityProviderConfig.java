@@ -71,6 +71,7 @@ public class IdentityProviderConfig {
   private String wantAssertionsEncrypted;
   private String useJwksUrl;
   private String wantAssertionsSigned;
+  private String otherContactIsSpPrivate;
   private String otherContactIpaCode;
   private String postBindingAuthnRequest;
   private String forceAuthn;
@@ -340,5 +341,13 @@ public class IdentityProviderConfig {
 
   public void setPrincipalType(String principalType) {
     this.principalType = principalType;
+  }
+
+  public String getOtherContactIsSpPrivate() {
+    return otherContactIsSpPrivate;
+  }
+
+  public void setOtherContactIsSpPrivate(String otherContactIsSpPrivate) {
+    this.otherContactIsSpPrivate = otherContactIsSpPrivate;
   }
 }

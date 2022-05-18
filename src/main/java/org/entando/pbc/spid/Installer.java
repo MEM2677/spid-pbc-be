@@ -1,9 +1,11 @@
 package org.entando.pbc.spid;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.micrometer.core.instrument.util.StringUtils;
 import org.entando.pbc.spid.dto.ConnectionInfo;
+import org.entando.pbc.spid.dto.MapperAttribute;
 import org.entando.pbc.spid.model.keycloak.AuthenticationFlow;
 import org.entando.pbc.spid.model.keycloak.Execution;
 import org.entando.pbc.spid.model.keycloak.IdentityProvider;
@@ -28,7 +30,6 @@ public class Installer {
 
   protected static void configureWithoutDiscovery() {
     Map<String, String> env2 = System.getenv();
-
 
     Boolean enabled = Boolean.parseBoolean(env2.get("SPID_CONFIG_ACTIVE"));
     String instances = "forumpa.apps.psdemo.eng-entando.com"; // new String(env2.get("KEYCLOACK_HOSTS_CSV_LIST"));
@@ -144,12 +145,24 @@ public class Installer {
       }
       // 6 - configure identity provider TODO customize data!
       ObjectMapper objectMapper = new ObjectMapper();
-      IdentityProvider idp = objectMapper.readValue(TEST_LOCAL_IdP, IdentityProvider.class);
+      IdentityProvider idp = objectMapper.readValue(PUBLIC_TEST_IdP, IdentityProvider.class);
       if (!RestApiOps.createIdentityProvider(host, token, idp)) {
         logger.error("Cannot configure the service provider [" + KEYCLOAK_IDP_DISPLAY_NAME + "], aborting setup" );
         return;
       }
-      // 7 - create mapping for SPID
+      // 7 - create mapping for SPID profile
+      if (!RestApiOps.addMapperUsername(host, token)) {
+        logger.error("Cannot configure the mapper for IdP [" + KEYCLOAK_IDP_ALIAS + "], aborting setup" );
+        return;
+      }
+      for (MapperAttribute entry: KEYCLOAK_IDP_MAPPING) {
+        logger.debug("configuring mapper {}", entry);
+        if (!RestApiOps.addMapperGeneric(host, token, entry.getName(), entry.getAttributeName(), entry.getUserAttributeName())) {
+          logger.error("Cannot configure the mapper for IdP [" + KEYCLOAK_IDP_ALIAS + "]:" + entry + ", aborting setup" );
+          return;
+        }
+      }
+      logger.info("Host [{}] successfully configured", host);
     } catch (Throwable t) {
       logger.error("unexpected error in configureKeycloak", t);
     }
