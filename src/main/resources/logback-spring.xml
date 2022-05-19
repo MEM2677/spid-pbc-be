@@ -37,7 +37,7 @@
 
 
 
-    <logger name="org.entando.pbc" level="DEBUG" additivity="false">
+    <logger name="org.entando.pbc" level="INFO" additivity="false">
         <!--        <appender-ref ref="RollingFile" />-->
         <appender-ref ref="CONSOLE" />
     </logger>

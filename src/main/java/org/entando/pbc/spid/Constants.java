@@ -4,7 +4,7 @@ import org.entando.pbc.spid.dto.MapperAttribute;
 
 public interface Constants {
 
-  boolean REST_API_DEBUG_ENABLED = true;
+  boolean REST_API_DEBUG_ENABLED = false;
 
 
   String PROTO = "https";

@@ -226,7 +226,7 @@ public class RestApiOps {
         }
       }
     } catch (Throwable t) {
-      logger.error("error in ", t);
+      logger.error("error in updateExecution", t);
     } finally {
       if (client != null) {
         client.close();
@@ -256,7 +256,7 @@ public class RestApiOps {
         }
       }
     } catch (Throwable t) {
-      logger.error("error in ", t);
+      logger.error("error in createIdentityProvider", t);
     } finally {
       if (client != null) {
         client.close();
@@ -281,8 +281,8 @@ public class RestApiOps {
   private static boolean addMapperElement(String host, Token token, String payload) {
     final String REST_URI
       = PROTO + "://" + host + "/auth/admin/realms/" + KEYCLOAK_DEFAULT_REALM + "/identity-provider/instances/" + KEYCLOAK_IDP_ALIAS + "/mappers";
-    Client client = null;
     boolean isOk = false;
+    Client client = null;
 
     try {
       client = ClientBuilder.newClient(REST_API_DEBUG_ENABLED ? createClientConfig(): new ClientConfig())
@@ -300,7 +300,7 @@ public class RestApiOps {
         }
       }
     } catch (Throwable t) {
-      logger.error("error in ", t);
+      logger.error("error in addMapperElement", t);
     } finally {
       if (client != null) {
         client.close();

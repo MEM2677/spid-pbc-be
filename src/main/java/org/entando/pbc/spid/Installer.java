@@ -1,6 +1,5 @@
 package org.entando.pbc.spid;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.fabric8.kubernetes.api.model.Pod;
 import io.micrometer.core.instrument.util.StringUtils;
@@ -10,7 +9,6 @@ import org.entando.pbc.spid.model.keycloak.AuthenticationFlow;
 import org.entando.pbc.spid.model.keycloak.Execution;
 import org.entando.pbc.spid.model.keycloak.IdentityProvider;
 import org.entando.pbc.spid.model.keycloak.Token;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,7 +16,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.util.Arrays;
-import java.util.Base64;
 import java.util.Map;
 import java.util.Optional;
 
@@ -29,23 +26,29 @@ public class Installer {
   private final static Logger logger = LoggerFactory.getLogger(Installer.class);
 
   protected static void configureWithoutDiscovery() {
-    Map<String, String> env2 = System.getenv();
+    Map<String, String> envVars = System.getenv();
 
-    Boolean enabled = Boolean.parseBoolean(env2.get("SPID_CONFIG_ACTIVE"));
-    String instances = "forumpa.apps.psdemo.eng-entando.com"; // new String(env2.get("KEYCLOACK_HOSTS_CSV_LIST"));
-    String username = "entando_keycloak_admin"; // env2.get("KEYCLOACK_USERNAME");
-    String passwordB64 = "Mzc2M2U1NjkyNDViNGE4OQ=="; // env2.get("KEYCLOACK_PASSWORD");
-    String password = new String(Base64.getDecoder().decode(passwordB64));
+
+    Boolean enabled = Boolean.parseBoolean(envVars.get("SPID_CONFIG_ACTIVE"));
+    String host = envVars.get("KEYCLOACK_HOST"); // "forumpa.apps.psdemo.eng-entando.com"; //
+    String username = envVars.get("KEYCLOACK_USERNAME"); // "entando_keycloak_admin"; //
+    String password = envVars.get("KEYCLOACK_PASSWORD");
+
+    if (envVars != null ) {
+      logger.debug("running with user {}", username);
+      if (StringUtils.isNotBlank(password)) {
+        logger.debug("(password OK)");
+      } else {
+        logger.warn("password not found, REST API's calls will fail!");
+      }
+      logger.debug("configuring host {}", host);
+    }
 
     if (enabled
-      && StringUtils.isNotBlank(instances)
+      && StringUtils.isNotBlank(host)
       && StringUtils.isNotBlank(username)
       && StringUtils.isNotBlank(password)) {
 
-      String hosts[] = instances.split(",");
-      String host = hosts[0];
-
-      logger.debug("Configuring host {}", host);
       ConnectionInfo kcc = new ConnectionInfo(host);
       kcc.setUsername(username);
       kcc.setPassword(password);
@@ -109,7 +112,6 @@ public class Installer {
         logger.error("could not add execution to the authentication flow, aborting configuration");
         return;
       }
-      logger.info("Added the new executor to the authentication flow");
       // 3 - get the id of the newly created execution
       executions = RestApiOps.getExecutions(host, token);
       if (executions == null || executions.length == 0
@@ -118,16 +120,15 @@ public class Installer {
         return;
       }
       String id = executions[executions.length - 1].getId();
-      logger.debug("Target execution ID is: " + id);
+      logger.debug("Target execution ID is [{}] ");
       //  4 - move executable to its position
       for (int i = 0; i < 2; i++) {
         if (!RestApiOps.raiseExecutionPriority(host, token, id)) {
           logger.error("Could not raise the execution level of the target execution " + id);
-          break;
+          return;
         }
       }
       // 5 - edit requirements of the given executables
-
       // 5A - REQUIRED for Automatically "Set Existing User"
       if (!updateExecutionRequirement(host, token, executions, KEYCLOAK_EXECUTION_EXPECTED_DISPLAY_NAME, "REQUIRED")) {
         logger.error("Cannot find target execution [" + KEYCLOAK_EXECUTION_EXPECTED_DISPLAY_NAME + "], aborting setup" );
@@ -143,7 +144,9 @@ public class Installer {
         logger.error("Cannot find target execution [" + KEYCLOAK_EXECUTION_VERIFICATION_OPTIONS_DISPLAY_NAME + "], aborting setup" );
         return;
       }
-      // 6 - configure identity provider TODO customize data!
+      logger.info("authentication flow successfully configured");
+
+      // 6 - configure identity provider
       ObjectMapper objectMapper = new ObjectMapper();
       IdentityProvider idp = objectMapper.readValue(PUBLIC_TEST_IdP, IdentityProvider.class);
       if (!RestApiOps.createIdentityProvider(host, token, idp)) {
@@ -162,7 +165,8 @@ public class Installer {
           return;
         }
       }
-      logger.info("Host [{}] successfully configured", host);
+      logger.info("identity provider [{}] successfully configured", KEYCLOAK_IDP_DISPLAY_NAME);
+      logger.info("Host [{}] configuration complete", host);
     } catch (Throwable t) {
       logger.error("unexpected error in configureKeycloak", t);
     }

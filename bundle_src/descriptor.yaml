@@ -1,5 +1,5 @@
 code: spid_installer # The bundle ID
-description: Autenticazione SPID # The description of the bundle
+description: Autenticazione SPID (test) # The description of the bundle
 
 components: # All components will be here
 
