@@ -12,3 +12,4 @@ bundle/
 logs/
 .idea/
 target/
+/node_modules/
